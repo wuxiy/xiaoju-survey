@@ -41,3 +41,8 @@ yarn.lock
 tmp
 exportfile
 userUpload
+
+# env files (含密钥，仅保留 .env.example 模板)
+.env
+.env.*
+!.env.example

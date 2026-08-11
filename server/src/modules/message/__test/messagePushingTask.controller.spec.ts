@@ -11,6 +11,7 @@ import {
 } from 'src/enums/messagePushing';
 import { MessagePushingTask } from 'src/models/messagePushingTask.entity';
 import { Authentication } from 'src/guards/authentication.guard';
+import { SurveyGuard } from 'src/guards/survey.guard';
 import { UserService } from 'src/modules/auth/services/user.service';
 
 import { UpdateMessagePushingTaskDto } from '../dto/updateMessagePushingTask.dto';
@@ -60,7 +61,10 @@ describe('MessagePushingTaskController', () => {
           })),
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(SurveyGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<MessagePushingTaskController>(
       MessagePushingTaskController,

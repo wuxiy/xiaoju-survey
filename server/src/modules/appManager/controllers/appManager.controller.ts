@@ -3,6 +3,8 @@ import { AppManagerService } from '../services/appManager.service';
 import { APPList } from '../appConfg';
 import { CreateTokenDto } from '../dto/createToken.dto';
 import { VerifyTokenDto } from '../dto/verifyToken.dto';
+import { HttpException } from 'src/exceptions/httpException';
+import { EXCEPTION_CODE } from 'src/enums/exceptionCode';
 import { ApiTags } from '@nestjs/swagger';
 
 @ApiTags('appManager')
@@ -10,16 +12,29 @@ import { ApiTags } from '@nestjs/swagger';
 export class AppManagerController {
   constructor(private readonly appManager: AppManagerService) {}
 
-  // 生成 appToken
+  // 生成 appToken，必须携带正确的 appId + appSecret
   @Post('getToken')
   async getAppToken(@Body() body: CreateTokenDto) {
-    const { appId } = body;
-    if (!appId) {
-      throw new Error('Missing required fields');
+    const { error } = CreateTokenDto.validate(body);
+    if (error) {
+      throw new HttpException(
+        `参数错误: ${error.message}`,
+        EXCEPTION_CODE.PARAMETER_ERROR,
+      );
     }
-    const appSecret = APPList.find((item) => item.appId === appId)?.appSecret;
-    if (!appSecret) {
-      throw new Error('Invalid appId');
+    const { appId, appSecret } = body;
+    if (!appId || !appSecret) {
+      throw new HttpException(
+        'Missing required fields',
+        EXCEPTION_CODE.PARAMETER_ERROR,
+      );
+    }
+    const app = APPList.find((item) => item.appId === appId);
+    if (!app || app.appSecret !== appSecret) {
+      throw new HttpException(
+        'Invalid appId or appSecret',
+        EXCEPTION_CODE.PARAMETER_ERROR,
+      );
     }
     const token = await this.appManager.generateToken(appId, appSecret);
     return {
@@ -31,16 +46,22 @@ export class AppManagerController {
   // 认证请求
   @Post('verify')
   async verifySignature(@Body() body: VerifyTokenDto) {
+    const { error } = VerifyTokenDto.validate(body);
+    if (error) {
+      throw new HttpException(
+        `参数错误: ${error.message}`,
+        EXCEPTION_CODE.PARAMETER_ERROR,
+      );
+    }
     const { appId, appToken } = body;
     if (!appId || !appToken) {
-      throw new Error('Missing required fields');
+      throw new HttpException(
+        'Missing required fields',
+        EXCEPTION_CODE.PARAMETER_ERROR,
+      );
     }
 
-    try {
-      await this.appManager.checkAppManager(appId, appToken);
-      return { code: 200, success: true };
-    } catch (e) {
-      throw new Error(e);
-    }
+    await this.appManager.checkAppManager(appId, appToken);
+    return { code: 200, success: true };
   }
 }

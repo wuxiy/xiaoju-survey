@@ -27,7 +27,7 @@ COPY --from=builder /builder/web/dist/ /xiaoju-survey/web/dist/
 COPY --from=builder /builder/server/dist/ /xiaoju-survey/server/dist/
 COPY --from=builder /builder/server/node_modules/ /xiaoju-survey/server/node_modules/
 COPY --from=builder /builder/server/public/ /xiaoju-survey/server/public/
-COPY --from=builder /builder/server/package*.json /builder/server/.env* /xiaoju-survey/server/
+COPY --from=builder /builder/server/package*.json /xiaoju-survey/server/
 COPY docker-run.sh /xiaoju-survey/docker-run.sh
 # 覆盖nginx配置文件
 COPY nginx/nginx.conf /etc/nginx/nginx.conf

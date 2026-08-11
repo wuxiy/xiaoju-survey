@@ -2,3 +2,7 @@
 **/dist
 **/logs
 **/package-lock.json
+**/.env
+**/.env.*
+!**/.env.example
+.git

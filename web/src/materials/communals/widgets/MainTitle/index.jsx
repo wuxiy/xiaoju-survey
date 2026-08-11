@@ -1,4 +1,5 @@
 import { defineComponent, computed, shallowRef, defineAsyncComponent } from 'vue'
+import { filterXSS } from '@/common/xss'
 import '@/render/styles/variable.scss'
 import './index.scss'
 
@@ -85,7 +86,7 @@ export default defineComponent({
                 class="mainTitle"
               />
             ) : (
-              <div class="mainTitle" v-html={mainTitle}></div>
+              <div class="mainTitle" v-html={filterXSS(mainTitle)}></div>
             )}
           </div>
         ) : (

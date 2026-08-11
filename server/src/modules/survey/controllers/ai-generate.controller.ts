@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Res } from '@nestjs/common';
+import { Controller, Post, Body, Res, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { AIGenerateService } from '../services/ai-generate.service';
 import type { Response } from 'express';
@@ -6,7 +6,9 @@ import { ConfigService } from '@nestjs/config';
 import { HttpException } from 'src/exceptions/httpException';
 import { Logger } from 'src/logger';
 import { EXCEPTION_CODE } from 'src/enums/exceptionCode';
+import { Authentication } from 'src/guards/authentication.guard';
 
+@UseGuards(Authentication)
 @Controller('/api/ai-generate')
 @ApiTags('survey')
 export class AIGenerateController {
@@ -27,12 +29,22 @@ export class AIGenerateController {
         EXCEPTION_CODE.SYSTEM_CONFIG_ERROR,
       );
     }
+    if (
+      !body.prompt ||
+      typeof body.prompt !== 'string' ||
+      body.prompt.length > 4000
+    ) {
+      throw new HttpException('prompt参数有误', EXCEPTION_CODE.PARAMETER_ERROR);
+    }
     const response = await this.aiService.callDeepSeekAPI({
       prompt: body.prompt,
       apiKey,
       apiUrl,
     });
-    if (!response.ok) throw new Error(`上游错误: ${response.statusText}`);
+    if (!response.ok) {
+      this.logger.error(`上游模型服务错误: ${response.statusText}`);
+      throw new HttpException('上游服务错误', EXCEPTION_CODE.SERVER_ERROR);
+    }
     const contentType = response.headers.get('Content-Type');
     const responseHeaders: Record<string, any> = {
       'Content-Type': contentType,

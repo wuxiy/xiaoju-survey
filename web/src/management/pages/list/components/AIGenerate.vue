@@ -131,6 +131,7 @@ import copy from 'copy-to-clipboard'
 import MsgItem from './MsgItem.vue'
 import MaterialGroup from '@/management/pages/edit/components/MaterialGroup.vue'
 import { nanoid } from 'nanoid'
+import { useUserStore } from '@/management/stores/user'
 
 const messages = ref<Array<{
   id: string,
@@ -227,10 +228,12 @@ const handleGenerate = async (userInput?: string) => {
     abortController = new AbortController()
     
     try {
+      const token = useUserStore().userInfo?.token
       const response = await fetch('/api/ai-generate/call-deepseek', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
         body: JSON.stringify({
           prompt: currentPrompt

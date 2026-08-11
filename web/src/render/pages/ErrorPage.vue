@@ -16,6 +16,7 @@ import { storeToRefs } from 'pinia'
 import communalLoader from '@materials/communals/communalLoader.js'
 import { useErrorInfo } from '../stores/errorInfo'
 import { useSurveyStore } from '../stores/survey'
+import { filterXSS } from '@/common/xss'
 
 const LogoIcon = communalLoader.loadComponent('LogoIcon')
 
@@ -34,7 +35,7 @@ const errorImage = computed(() => {
 })
 
 const errorMsg = computed(() => {
-  return errorInfo.value.errorMsg || '提交失败'
+  return filterXSS(errorInfo.value.errorMsg || '提交失败')
 })
 const logoConf = computed(() => surveyStore.bottomConf || {})
 </script>

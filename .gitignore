@@ -5,8 +5,9 @@ dist
 package-lock.json
 
 # local env files
-.env.local
-.env.*.local
+.env
+.env.*
+!.env.example
 
 # Log files
 npm-debug.log*

@@ -5,10 +5,11 @@ services:
     container_name: xiaoju-survey-mongo
     restart: always
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME} # 默认使用系统的环境变量
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD} # 默认使用系统的环境变量
+      # 必须显式设置，未设置时 compose 直接报错，避免 mongo 以无认证模式启动
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:?请设置 MONGO_INITDB_ROOT_USERNAME 环境变量}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:?请设置 MONGO_INITDB_ROOT_PASSWORD 环境变量}
     ports:
-      - "27017:27017" # 数据库端口
+      - "127.0.0.1:27017:27017" # 仅绑定本机回环，避免数据库对所在网络暴露
     volumes:
       - mongo-volume:/data/db # xiaoju-survey-data/db/data:/data/db
     networks:
@@ -26,6 +27,11 @@ services:
     environment:
       XIAOJU_SURVEY_MONGO_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@xiaoju-survey-mongo:27017 # docker-compose 会根据容器名称自动处理
       XIAOJU_SURVEY_MONGO_AUTH_SOURCE: ${XIAOJU_SURVEY_MONGO_AUTH_SOURCE} # 如使用mongo官方镜像，并且设置了MONGO_INITDB_ROOT_USERNAME和MONGO_INITDB_ROOT_PASSWORD，默认值是admin
+      # 镜像内不再内置 .env，密钥必须通过环境变量注入
+      XIAOJU_SURVEY_JWT_SECRET: ${XIAOJU_SURVEY_JWT_SECRET:?请设置 XIAOJU_SURVEY_JWT_SECRET 环境变量}
+      XIAOJU_SURVEY_JWT_EXPIRES_IN: ${XIAOJU_SURVEY_JWT_EXPIRES_IN}
+      XIAOJU_SURVEY_RESPONSE_AES_ENCRYPT_SECRET_KEY: ${XIAOJU_SURVEY_RESPONSE_AES_ENCRYPT_SECRET_KEY}
+      XIAOJU_SURVEY_HTTP_DATA_ENCRYPT_TYPE: ${XIAOJU_SURVEY_HTTP_DATA_ENCRYPT_TYPE}
       AImodel_API_URL: ${AImodel_API_URL}
       AImodel_API_KEY: ${AImodel_API_KEY}
       AImodel_MODEL: ${AImodel_MODEL}

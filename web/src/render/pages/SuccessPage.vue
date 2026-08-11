@@ -26,6 +26,8 @@ import { computed } from 'vue'
 import { useSurveyStore } from '../stores/survey'
 // @ts-ignore
 import communalLoader from '@materials/communals/communalLoader.js'
+// @ts-ignore
+import { filterXSS } from '@/common/xss'
 
 const LogoIcon = communalLoader.loadComponent('LogoIcon')
 const surveyStore = useSurveyStore()
@@ -35,7 +37,7 @@ const logoConf = computed(() => {
 })
 const successMsg = computed(() => {
   const msgContent = (surveyStore?.submitConf as any)?.msgContent || {}
-  return msgContent?.msg_200 || '提交成功'
+  return filterXSS(msgContent?.msg_200 || '提交成功')
 })
 </script>
 <style lang="scss" scoped>

@@ -28,7 +28,13 @@ export class OpenAuthGuard implements CanActivate {
       await this.appManagerService.checkAppManager(appId, appToken);
       return true;
     } catch (e) {
-      throw new Error(e);
+      if (e instanceof HttpException) {
+        throw e;
+      }
+      throw new HttpException(
+        'appToken验证失败',
+        EXCEPTION_CODE.AUTHENTICATION_FAILED,
+      );
     }
   }
 }

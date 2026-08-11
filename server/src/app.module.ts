@@ -16,7 +16,8 @@ import { UpgradeModule } from './modules/upgrade/upgrade.module';
 
 import { join } from 'path';
 
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { HttpExceptionsFilter } from './exceptions/httpExceptions.filter';
 
 import { Captcha } from './models/captcha.entity';
@@ -121,12 +122,23 @@ import { AppManagerModule } from './modules/appManager/appManager.module';
     UpgradeModule,
     ChannelModule,
     AppManagerModule,
+    ThrottlerModule.forRoot([
+      {
+        // 全局限流：单 IP 每分钟 300 次，敏感接口可用 @Throttle 单独收紧
+        ttl: 60 * 1000,
+        limit: 300,
+      },
+    ]),
   ],
   controllers: [],
   providers: [
     {
       provide: APP_FILTER,
       useClass: HttpExceptionsFilter,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
     LoggerProvider,
     PluginManagerProvider,

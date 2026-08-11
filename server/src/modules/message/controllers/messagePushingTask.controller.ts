@@ -26,6 +26,9 @@ import { QueryMessagePushingTaskListDto } from '../dto/queryMessagePushingTaskLi
 import { HttpException } from 'src/exceptions/httpException';
 import { EXCEPTION_CODE } from 'src/enums/exceptionCode';
 import { Authentication } from 'src/guards/authentication.guard';
+import { SurveyGuard } from 'src/guards/survey.guard';
+import { SURVEY_PERMISSION } from 'src/enums/surveyPermission';
+import { SetMetadata } from '@nestjs/common';
 
 @UseGuards(Authentication)
 @ApiBearerAuth()
@@ -165,6 +168,9 @@ export class MessagePushingTaskController {
     status: 200,
   })
   @Post(':taskId/surveys/:surveyId')
+  @UseGuards(SurveyGuard)
+  @SetMetadata('surveyId', 'params.surveyId')
+  @SetMetadata('surveyPermission', [SURVEY_PERMISSION.SURVEY_RESPONSE_MANAGE])
   async surveyAuthorizeTask(
     @Request() req,
     @Param('taskId') taskId: string,
