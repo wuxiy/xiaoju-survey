@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XIAOJUSURVEY 小桔调研 — 滴滴开源的轻量调研系统</title>
+<meta name="description" content="XIAOJUSURVEY 是滴滴开源的轻量、安全的调研系统，用于构建问卷、考试、测评、投票和复杂表单。NestJS + Vue3 全栈交付，Docker 一键部署。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0c10;
+  --bg-1: #0e1117;
+  --bg-2: #141a23;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.16);
+  --txt: #e8ebf0;
+  --txt-2: #9aa3b2;
+  --txt-3: #5f6879;
+  --accent: #ffa600;
+  --accent-deep: #d48d00;
+  --accent-soft: rgba(255, 166, 0, 0.1);
+  --teal: #0f8a82;
+  --mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  --disp: 'Space Grotesk', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --body: -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--txt);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+::selection { background: var(--accent); color: #0a0c10; }
+a { color: inherit; text-decoration: none; }
+code, pre { font-family: var(--mono); }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 32px; }
+.mono-label {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.mono-label::before { content: ''; width: 24px; height: 1px; background: var(--accent); }
+
+/* ---------- reveal ---------- */
+.rv { opacity: 0; transform: translateY(24px); transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1); }
+.rv.in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .rv { opacity: 1; transform: none; transition: none; }
+  html { scroll-behavior: auto; }
+}
+
+/* ---------- nav ---------- */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(10, 12, 16, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line);
+}
+nav .wrap { display: flex; align-items: center; height: 60px; gap: 32px; }
+.logo { font-family: var(--mono); font-weight: 700; font-size: 15px; letter-spacing: 0.06em; display: flex; align-items: center; gap: 10px; }
+.logo .dot { width: 9px; height: 9px; background: var(--accent); border-radius: 2px; box-shadow: 0 0 12px rgba(255, 166, 0, 0.55); }
+.nav-links { display: flex; gap: 28px; margin-left: auto; }
+.nav-links a { font-size: 13.5px; color: var(--txt-2); transition: color 0.2s; }
+.nav-links a:hover { color: var(--txt); }
+.nav-gh {
+  font-family: var(--mono); font-size: 12.5px;
+  border: 1px solid var(--line-strong); border-radius: 6px;
+  padding: 7px 14px; color: var(--txt);
+  display: inline-flex; align-items: center; gap: 8px;
+  transition: border-color 0.2s, background 0.2s, transform 0.1s;
+}
+.nav-gh:hover { border-color: var(--accent); background: var(--accent-soft); }
+.nav-gh:active { transform: scale(0.96); }
+@media (max-width: 720px) { .nav-links { display: none; } }
+
+/* ---------- hero ---------- */
+.hero { padding: 168px 0 96px; position: relative; }
+.hero::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 70%);
+  opacity: 0.5;
+}
+.hero .wrap { position: relative; display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 64px; align-items: center; }
+.badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 12px; color: var(--txt-2);
+  border: 1px solid var(--line-strong); border-radius: 999px; padding: 6px 14px;
+  margin-bottom: 28px;
+}
+.badge b { color: var(--accent); font-weight: 500; }
+h1 {
+  font-family: var(--disp);
+  font-size: clamp(38px, 5.2vw, 60px);
+  line-height: 1.12; font-weight: 700; letter-spacing: -0.01em;
+  margin-bottom: 24px;
+}
+h1 .accent { color: var(--accent); }
+.hero-sub { font-size: 17px; color: var(--txt-2); max-width: 480px; margin-bottom: 36px; }
+.hero-sub b { color: var(--txt); font-weight: 500; }
+.cta-row { display: flex; gap: 14px; flex-wrap: wrap; }
+.btn {
+  font-size: 14.5px; font-weight: 500; border-radius: 6px; padding: 13px 26px;
+  display: inline-flex; align-items: center; gap: 9px;
+  transition: transform 0.1s, background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+.btn:active { transform: scale(0.96); }
+.btn-primary { background: var(--accent); color: #131313; }
+.btn-primary:hover { background: #ffb62e; box-shadow: 0 4px 24px rgba(255, 166, 0, 0.3); }
+.btn-ghost { border: 1px solid var(--line-strong); color: var(--txt); background: transparent; }
+.btn-ghost:hover { border-color: var(--accent); background: var(--accent-soft); }
+
+/* terminal */
+.term {
+  background: var(--bg-1); border: 1px solid var(--line-strong); border-radius: 10px;
+  overflow: hidden; box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+}
+.term-bar { display: flex; align-items: center; gap: 7px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.term-bar i { width: 11px; height: 11px; border-radius: 50%; background: #2b323e; }
+.term-bar i:nth-child(1) { background: #ff5f57; }
+.term-bar i:nth-child(2) { background: #febc2e; }
+.term-bar i:nth-child(3) { background: #28c840; }
+.term-bar span { margin-left: 8px; font-family: var(--mono); font-size: 11.5px; color: var(--txt-3); }
+.term-body { padding: 20px 22px 24px; font-family: var(--mono); font-size: 13.5px; line-height: 2; min-height: 228px; white-space: pre-wrap; word-break: break-all; }
+.term-body .p { color: var(--accent); }
+.term-body .ok { color: #28c840; }
+.term-body .dim { color: var(--txt-3); }
+.cursor { display: inline-block; width: 8px; height: 16px; background: var(--accent); vertical-align: -2px; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+@media (max-width: 900px) {
+  .hero { padding: 128px 0 72px; }
+  .hero .wrap { grid-template-columns: 1fr; gap: 48px; }
+}
+
+/* ---------- stats ---------- */
+.stats { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--bg-1); }
+.stats .wrap { display: grid; grid-template-columns: repeat(4, 1fr); }
+.stat { padding: 40px 24px; border-left: 1px solid var(--line); }
+.stat:first-child { border-left: none; }
+.stat .num { font-family: var(--disp); font-size: 40px; font-weight: 700; color: var(--txt); line-height: 1; }
+.stat .num em { font-style: normal; color: var(--accent); }
+.stat .lbl { font-size: 13px; color: var(--txt-3); margin-top: 10px; font-family: var(--mono); letter-spacing: 0.04em; }
+@media (max-width: 720px) {
+  .stats .wrap { grid-template-columns: 1fr 1fr; }
+  .stat:nth-child(3) { border-left: none; }
+  .stat { border-top: 1px solid var(--line); padding: 28px 20px; }
+  .stat:nth-child(-n+2) { border-top: none; }
+}
+
+/* ---------- section base ---------- */
+section { padding: 110px 0; }
+.sec-head { margin-bottom: 56px; max-width: 640px; }
+.sec-head h2 { font-family: var(--disp); font-size: clamp(28px, 3.6vw, 40px); font-weight: 700; letter-spacing: -0.01em; margin: 18px 0 14px; line-height: 1.25; }
+.sec-head p { color: var(--txt-2); font-size: 16px; }
+
+/* ---------- demo ---------- */
+.demo { background: var(--bg-1); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.demo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
+.survey-card {
+  background: var(--bg-2); border: 1px solid var(--line-strong); border-radius: 10px;
+  padding: 32px; position: relative;
+}
+.survey-card::before { content: ''; position: absolute; top: -1px; left: 24px; right: 24px; height: 2px; background: var(--accent); }
+.survey-card .q-no { font-family: var(--mono); font-size: 12px; color: var(--accent); margin-bottom: 10px; }
+.survey-card .q-title { font-size: 17px; font-weight: 600; margin-bottom: 22px; }
+.opt {
+  display: flex; align-items: center; gap: 12px;
+  border: 1px solid var(--line); border-radius: 6px; padding: 13px 16px; margin-bottom: 10px;
+  font-size: 14.5px; color: var(--txt-2); cursor: pointer; user-select: none;
+  transition: border-color 0.15s, background 0.15s, color 0.15s, transform 0.1s;
+}
+.opt:hover { border-color: var(--line-strong); color: var(--txt); }
+.opt:active { transform: scale(0.98); }
+.opt .radio { width: 16px; height: 16px; border: 1.5px solid var(--txt-3); border-radius: 50%; flex-shrink: 0; transition: border-color 0.15s; position: relative; }
+.opt.sel { border-color: var(--accent); background: var(--accent-soft); color: var(--txt); }
+.opt.sel .radio { border-color: var(--accent); }
+.opt.sel .radio::after { content: ''; position: absolute; inset: 3px; background: var(--accent); border-radius: 50%; }
+.survey-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 24px; }
+.submit-btn {
+  background: var(--accent); color: #131313; border: none; font-family: var(--body);
+  font-size: 14px; font-weight: 600; border-radius: 6px; padding: 11px 30px; cursor: pointer;
+  transition: transform 0.1s, opacity 0.2s, background 0.2s;
+}
+.submit-btn:hover { background: #ffb62e; }
+.submit-btn:active { transform: scale(0.95); }
+.submit-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.survey-count { font-family: var(--mono); font-size: 12.5px; color: var(--txt-3); }
+.survey-count b { color: var(--accent); font-weight: 500; }
+.survey-done { text-align: center; padding: 48px 0 32px; display: none; }
+.survey-done .big { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+.survey-done .big i { color: #28c840; font-style: normal; margin-right: 8px; }
+.survey-done p { font-size: 13.5px; color: var(--txt-3); font-family: var(--mono); }
+@media (max-width: 900px) { .demo-grid { grid-template-columns: 1fr; gap: 40px; } }
+
+/* ---------- features bento ---------- */
+.feat-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; }
+.feat {
+  grid-column: span 2; background: var(--bg-1); border: 1px solid var(--line); border-radius: 10px;
+  padding: 30px 28px; position: relative; overflow: hidden;
+  transition: border-color 0.25s, transform 0.25s;
+}
+.feat:hover { border-color: var(--line-strong); transform: translateY(-3px); }
+.feat.wide { grid-column: span 4; }
+.feat h3 { font-size: 17px; font-weight: 600; margin: 16px 0 8px; }
+.feat p { font-size: 14px; color: var(--txt-2); line-height: 1.75; }
+.feat p code { color: var(--accent); font-size: 12.5px; background: var(--accent-soft); padding: 1px 6px; border-radius: 4px; }
+.feat .ic {
+  width: 38px; height: 38px; border-radius: 8px; border: 1px solid var(--line-strong);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 15px; color: var(--accent); background: var(--accent-soft);
+}
+.feat .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.feat .tag { font-family: var(--mono); font-size: 11.5px; color: var(--txt-2); border: 1px solid var(--line); border-radius: 4px; padding: 3px 9px; }
+@media (max-width: 900px) { .feat, .feat.wide { grid-column: span 6; } }
+
+/* ---------- arch ---------- */
+.arch { background: var(--bg-1); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.arch-grid { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 0; align-items: stretch; }
+.arch-node { background: var(--bg-2); border: 1px solid var(--line-strong); border-radius: 10px; padding: 28px; }
+.arch-node .role { font-family: var(--mono); font-size: 11.5px; color: var(--accent); letter-spacing: 0.12em; margin-bottom: 8px; }
+.arch-node h3 { font-family: var(--disp); font-size: 20px; margin-bottom: 12px; }
+.arch-node ul { list-style: none; }
+.arch-node li { font-size: 13.5px; color: var(--txt-2); padding: 6px 0 6px 18px; position: relative; border-bottom: 1px dashed var(--line); }
+.arch-node li:last-child { border-bottom: none; }
+.arch-node li::before { content: '›'; position: absolute; left: 0; color: var(--accent); font-family: var(--mono); }
+.arch-node li code { color: var(--txt); font-size: 12px; }
+.arch-arrow { display: flex; align-items: center; padding: 0 18px; color: var(--txt-3); font-family: var(--mono); font-size: 20px; }
+.arch-note { margin-top: 28px; font-family: var(--mono); font-size: 12.5px; color: var(--txt-3); text-align: center; }
+.arch-note code { color: var(--accent); }
+@media (max-width: 900px) {
+  .arch-grid { grid-template-columns: 1fr; gap: 12px; }
+  .arch-arrow { justify-content: center; transform: rotate(90deg); padding: 4px 0; }
+}
+
+/* ---------- quickstart ---------- */
+.steps { display: flex; flex-direction: column; gap: 14px; }
+.step {
+  display: grid; grid-template-columns: 56px 220px 1fr; gap: 24px; align-items: center;
+  background: var(--bg-1); border: 1px solid var(--line); border-radius: 10px; padding: 22px 26px;
+}
+.step .no { font-family: var(--disp); font-size: 30px; font-weight: 700; color: var(--accent); opacity: 0.9; }
+.step .what b { display: block; font-size: 15px; margin-bottom: 3px; }
+.step .what span { font-size: 12.5px; color: var(--txt-3); font-family: var(--mono); }
+.codebox { background: #07090c; border: 1px solid var(--line); border-radius: 6px; padding: 13px 44px 13px 16px; position: relative; overflow-x: auto; }
+.codebox code { font-size: 13px; color: #d3dbe6; white-space: nowrap; }
+.codebox .cm { color: var(--txt-3); }
+.copy-btn {
+  position: absolute; top: 8px; right: 8px; width: 26px; height: 26px;
+  border: 1px solid var(--line); border-radius: 5px; background: var(--bg-2);
+  color: var(--txt-3); font-size: 12px; cursor: pointer; font-family: var(--mono);
+  transition: color 0.15s, border-color 0.15s;
+}
+.copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+@media (max-width: 900px) { .step { grid-template-columns: 40px 1fr; } .step .codebox { grid-column: 1 / -1; } }
+
+/* ---------- deploy ---------- */
+.deploy { background: var(--bg-1); border-top: 1px solid var(--line); }
+.deploy-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+.deploy-grid .codebox { padding: 20px; }
+.deploy-grid .codebox code { white-space: pre; line-height: 1.9; }
+.env-list { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.env-row { display: grid; grid-template-columns: 1fr 1.2fr; border-bottom: 1px solid var(--line); }
+.env-row:last-child { border-bottom: none; }
+.env-row > div { padding: 13px 18px; font-size: 13px; }
+.env-row .k { font-family: var(--mono); font-size: 12px; color: var(--accent); border-right: 1px solid var(--line); word-break: break-all; }
+.env-row .v { color: var(--txt-2); }
+.deploy-tip { margin-top: 20px; font-size: 13.5px; color: var(--txt-3); }
+.deploy-tip code { color: var(--txt-2); font-size: 12px; }
+@media (max-width: 900px) { .deploy-grid { grid-template-columns: 1fr; gap: 32px; } }
+
+/* ---------- final cta ---------- */
+.final { text-align: center; padding: 130px 0; position: relative; }
+.final h2 { font-family: var(--disp); font-size: clamp(30px, 4.4vw, 48px); font-weight: 700; margin: 20px 0 16px; letter-spacing: -0.01em; }
+.final p { color: var(--txt-2); margin-bottom: 40px; }
+
+/* ---------- footer ---------- */
+footer { border-top: 1px solid var(--line); padding: 44px 0; background: var(--bg-1); }
+footer .wrap { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+footer .f-links { display: flex; gap: 24px; margin-left: auto; }
+footer .f-links a { font-size: 13px; color: var(--txt-2); font-family: var(--mono); transition: color 0.2s; }
+footer .f-links a:hover { color: var(--accent); }
+footer .lic { font-size: 12.5px; color: var(--txt-3); font-family: var(--mono); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="logo" href="#top"><span class="dot"></span>XIAOJUSURVEY</a>
+    <div class="nav-links">
+      <a href="#demo">体验</a>
+      <a href="#features">特性</a>
+      <a href="#arch">架构</a>
+      <a href="#quickstart">快速开始</a>
+      <a href="#deploy">部署</a>
+    </div>
+    <a class="nav-gh" href="https://github.com/didi/xiaoju-survey" target="_blank" rel="noopener">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+      GitHub
+    </a>
+  </div>
+</nav>
+
+<!-- ================= HERO ================= -->
+<header class="hero" id="top">
+  <div class="wrap">
+    <div class="rv">
+      <div class="badge"><b>Apache-2.0</b> 开源 · 滴滴出品 · v1.3</div>
+      <h1>轻量、安全的<br><span class="accent">调研系统</span>，自托管。</h1>
+      <p class="hero-sub">一套系统覆盖 <b>问卷、考试、测评、投票与复杂表单</b>。前后端全栈开源，题型物料可扩展，安全能力内建，Docker 一键部署到你自己的服务器。</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#quickstart">快速开始 →</a>
+        <a class="btn btn-ghost" href="https://xiaojusurvey.didi.cn" target="_blank" rel="noopener">官方文档</a>
+      </div>
+    </div>
+    <div class="term rv">
+      <div class="term-bar"><i></i><i></i><i></i><span>xiaoju-survey — zsh</span></div>
+      <div class="term-body" id="term"></div>
+    </div>
+  </div>
+</header>
+
+<!-- ================= STATS ================= -->
+<div class="stats">
+  <div class="wrap">
+    <div class="stat rv"><div class="num">2<em> 端</em></div><div class="lbl">B 端管理 + C 端渲染</div></div>
+    <div class="stat rv"><div class="num">20<em>+</em></div><div class="lbl">题型物料，可插拔扩展</div></div>
+    <div class="stat rv"><div class="num">353</div><div class="lbl">服务端测试用例</div></div>
+    <div class="stat rv"><div class="num">1<em> 条</em></div><div class="lbl">命令完成 Docker 部署</div></div>
+  </div>
+</div>
+
+<!-- ================= DEMO ================= -->
+<section class="demo" id="demo">
+  <div class="wrap">
+    <div class="demo-grid">
+      <div class="rv">
+        <span class="mono-label">Live Demo</span>
+        <h2 style="font-family:var(--disp);font-size:clamp(28px,3.6vw,40px);margin:18px 0 14px;line-height:1.25;">30 秒，感受一次<br>真实的答题链路</h2>
+        <p style="color:var(--txt-2);">下面是一张按 C 端渲染逻辑手工复刻的问卷卡片：单选题、必答校验、提交反馈——和线上答题页同一套交互语义。点一下试试。</p>
+      </div>
+      <div class="survey-card rv">
+        <div id="surveyLive">
+          <div class="q-no">Q1 / 单选题 *</div>
+          <div class="q-title">你会把 XIAOJUSURVEY 用在什么场景？</div>
+          <div class="opt" data-v="a"><span class="radio"></span>问卷调查 / 满意度调研</div>
+          <div class="opt" data-v="b"><span class="radio"></span>在线考试 / 知识测评</div>
+          <div class="opt" data-v="c"><span class="radio"></span>投票评选 / 活动报名</div>
+          <div class="opt" data-v="d"><span class="radio"></span>复杂表单 / 数据收集</div>
+          <div class="survey-foot">
+            <span class="survey-count">已回收 <b id="cnt">1,284</b> 份答卷 · 本页演示</span>
+            <button class="submit-btn" id="submitBtn" disabled>提交</button>
+          </div>
+        </div>
+        <div class="survey-done" id="surveyDone">
+          <div class="big"><i>✓</i>提交成功</div>
+          <p>response inserted · hook: RESPONSE_INSERTED</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FEATURES ================= -->
+<section id="features">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="mono-label">Features</span>
+      <h2>从题目物料到数据回收，<br>每个环节都为二次开发留了接口</h2>
+      <p>不是一套写死的问卷工具，而是一个可插拔的调研系统框架。</p>
+    </div>
+    <div class="feat-grid">
+      <div class="feat wide rv">
+        <div class="ic">▦</div>
+        <h3>题型物料库</h3>
+        <p>题目、设置器、公共组件全部物料化，B/C 两端共用。通过 <code>questionLoader</code> / <code>setterLoader</code> 动态装载——新增一种题型，就是新增一个物料包，这是二次开发扩展的核心位置。</p>
+        <div class="tag-row">
+          <span class="tag">单选 / 多选</span><span class="tag">填空</span><span class="tag">评分</span><span class="tag">矩阵</span><span class="tag">级联</span><span class="tag">投票</span><span class="tag">NPS</span><span class="tag">日期</span>
+        </div>
+      </div>
+      <div class="feat rv">
+        <div class="ic">⌘</div>
+        <h3>逻辑编排引擎</h3>
+        <p>可视化编排显示逻辑与跳转逻辑，<code>logicEngine</code> 在 C 端实时求值，复杂问卷不再靠问卷创建者写代码。</p>
+      </div>
+      <div class="feat rv">
+        <div class="ic">◉</div>
+        <h3>AI 生成问卷</h3>
+        <p>一句自然语言描述，流式生成完整问卷 schema。接入自己的 LLM 服务，密钥只在服务端。</p>
+      </div>
+      <div class="feat rv">
+        <div class="ic">⛨</div>
+        <h3>安全能力内建</h3>
+        <p>传输加密、敏感词检测、发布审查、投票防刷、富文本 XSS 过滤、接口级权限守卫——默认开启，不是选配。</p>
+      </div>
+      <div class="feat rv">
+        <div class="ic">⧉</div>
+        <h3>空间与协作</h3>
+        <p>Workspace 多角色权限 + 问卷级协作者管理，团队协同与多租户场景开箱即用。</p>
+      </div>
+      <div class="feat wide rv">
+        <div class="ic">↧</div>
+        <h3>数据回收与分析</h3>
+        <p>分题统计、选项计数、数据导出下载任务、消息推送 Hook（答卷入库即触发 webhook）。答卷数据从回收、统计到推送的链路完整闭环。</p>
+        <div class="tag-row">
+          <span class="tag">分题统计</span><span class="tag">Excel 导出</span><span class="tag">Webhook 推送</span><span class="tag">白名单/密码</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ARCH ================= -->
+<section class="arch" id="arch">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="mono-label">Architecture</span>
+      <h2>前后端分离的单仓架构</h2>
+      <p>两个独立子工程各自管理依赖，通过 nginx 网关组合为一个整体对外服务。</p>
+    </div>
+    <div class="arch-grid rv">
+      <div class="arch-node">
+        <div class="role">WEB / MPA</div>
+        <h3>Vue 3 + Vite 5</h3>
+        <ul>
+          <li><code>management</code> B 端：编辑、发布、分析</li>
+          <li><code>render</code> C 端：答题页，预览复用</li>
+          <li><code>materials</code> 两端共用题型物料库</li>
+          <li>ElementPlus · Pinia · 按需自动引入</li>
+        </ul>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node">
+        <div class="role">SERVER / API</div>
+        <h3>NestJS 10 + TypeORM</h3>
+        <ul>
+          <li>9 大业务模块，统一 <code>/api</code> 前缀</li>
+          <li>Authentication / Survey / Workspace 守卫</li>
+          <li>安全插件机制：响应加密、脱敏</li>
+          <li>统一异常码 + 全局限流</li>
+        </ul>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node">
+        <div class="role">DATA / OPS</div>
+        <h3>MongoDB + Docker</h3>
+        <ul>
+          <li>TypeORM 实体，事务与聚合</li>
+          <li>本地开发内置内存 Mongo，零依赖启动</li>
+          <li>nginx 反代 <code>/api</code> 与静态资源</li>
+          <li>多阶段构建，slim / full 双镜像</li>
+        </ul>
+      </div>
+    </div>
+    <p class="arch-note">默认端口链路：浏览器 → nginx <code>:8080</code> → NestJS <code>:3000</code> → MongoDB <code>:27017</code></p>
+  </div>
+</section>
+
+<!-- ================= QUICKSTART ================= -->
+<section id="quickstart">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="mono-label">Quickstart</span>
+      <h2>三条命令，跑起完整系统</h2>
+      <p>本地开发无需安装 MongoDB——内存数据库随服务自动启动。</p>
+    </div>
+    <div class="steps">
+      <div class="step rv">
+        <div class="no">01</div>
+        <div class="what"><b>克隆仓库</b><span>Node ≥ 18 · npm ≥ 8.6</span></div>
+        <div class="codebox"><code>git clone https://github.com/didi/xiaoju-survey.git</code><button class="copy-btn">⧉</button></div>
+      </div>
+      <div class="step rv">
+        <div class="no">02</div>
+        <div class="what"><b>启动服务端</b><span>自动拉起内存 MongoDB · :3000</span></div>
+        <div class="codebox"><code>cd server && npm install && npm run local</code><button class="copy-btn">⧉</button></div>
+      </div>
+      <div class="step rv">
+        <div class="no">03</div>
+        <div class="what"><b>启动前端</b><span>Vite dev server · :8080</span></div>
+        <div class="codebox"><code>cd web && npm install && npm run serve</code><button class="copy-btn">⧉</button></div>
+      </div>
+    </div>
+    <p class="arch-note rv" style="margin-top:28px;">→ 管理端 <code>http://localhost:8080/management</code> · 答题端 <code>http://localhost:8080/render/:surveyPath</code></p>
+  </div>
+</section>
+
+<!-- ================= DEPLOY ================= -->
+<section class="deploy" id="deploy">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <span class="mono-label">Deploy</span>
+      <h2>生产环境，一个 compose 文件</h2>
+      <p>MongoDB 与应用镜像一键拉起，密钥全部走环境变量注入。</p>
+    </div>
+    <div class="deploy-grid">
+      <div class="rv">
+        <div class="codebox"><code><span class="cm"># 配置数据库与密钥后，一条命令启动</span>
+export MONGO_INITDB_ROOT_USERNAME=admin
+export MONGO_INITDB_ROOT_PASSWORD=********
+export XIAOJU_SURVEY_JWT_SECRET=********
+
+docker compose up -d
+
+<span class="cm"># 镜像版本：slim（生产）/ full（调试）</span>
+<span class="cm"># 对外服务：http://localhost:8080</span></code><button class="copy-btn">⧉</button></div>
+        <p class="deploy-tip">运行时镜像内 nginx 托管前端静态资源，并将 <code>/api</code>、<code>/exportfile</code>、<code>/userUpload</code> 反代到本机 NestJS 服务。</p>
+      </div>
+      <div class="rv">
+        <div class="env-list">
+          <div class="env-row"><div class="k">XIAOJU_SURVEY_MONGO_URL</div><div class="v">MongoDB 连接串</div></div>
+          <div class="env-row"><div class="k">XIAOJU_SURVEY_JWT_SECRET</div><div class="v">JWT 签名密钥（必填）</div></div>
+          <div class="env-row"><div class="k">XIAOJU_SURVEY_RESPONSE_AES_…</div><div class="v">答卷响应加密密钥</div></div>
+          <div class="env-row"><div class="k">AImodel_API_URL / KEY</div><div class="v">接入自有 LLM，启用 AI 生成</div></div>
+          <div class="env-row"><div class="k">PORT</div><div class="v">服务端端口，默认 3000</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FINAL ================= -->
+<section class="final">
+  <div class="wrap rv">
+    <span class="mono-label" style="justify-content:center;">Open Source</span>
+    <h2>把数据，放在自己的服务器上。</h2>
+    <p>Apache-2.0 协议，商用友好。欢迎 Star、Issue 与 PR。</p>
+    <div class="cta-row" style="justify-content:center;">
+      <a class="btn btn-primary" href="https://github.com/didi/xiaoju-survey" target="_blank" rel="noopener">GitHub 仓库 →</a>
+      <a class="btn btn-ghost" href="https://xiaojusurvey.didi.cn" target="_blank" rel="noopener">阅读官方文档</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <a class="logo" href="#top"><span class="dot"></span>XIAOJUSURVEY</a>
+    <div class="f-links">
+      <a href="https://github.com/didi/xiaoju-survey" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://xiaojusurvey.didi.cn" target="_blank" rel="noopener">文档</a>
+      <a href="https://github.com/didi/xiaoju-survey/blob/main/LICENSE" target="_blank" rel="noopener">Apache-2.0</a>
+    </div>
+    <span class="lic">© XIAOJUSURVEY · 滴滴开源</span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  /* ---- scroll reveal (staggered) ---- */
+  var els = document.querySelectorAll('.rv');
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        var sibs = Array.prototype.slice.call(e.target.parentElement.querySelectorAll(':scope > .rv'));
+        var idx = Math.max(0, sibs.indexOf(e.target));
+        e.target.style.transitionDelay = (idx * 70) + 'ms';
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  els.forEach(function (el) { io.observe(el); });
+
+  /* ---- terminal typing ---- */
+  var lines = [
+    { html: '<span class="p">$</span> git clone https://github.com/didi/xiaoju-survey.git' },
+    { html: '<span class="p">$</span> docker compose up -d' },
+    { html: '<span class="ok">✓</span> mongo          <span class="dim">ready</span>   :27017' },
+    { html: '<span class="ok">✓</span> xiaoju-survey  <span class="dim">ready</span>   :8080' },
+    { html: '<span class="dim">→ 打开 http://localhost:8080/management</span>' }
+  ];
+  var term = document.getElementById('term');
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduced) {
+    term.innerHTML = lines.map(function (l) { return l.html; }).join('\n');
+  } else {
+    var li = 0, started = false;
+    function typeLine() {
+      if (li >= lines.length) { term.insertAdjacentHTML('beforeend', '<span class="cursor"></span>'); return; }
+      var div = document.createElement('div');
+      term.appendChild(div);
+      var tmp = document.createElement('div');
+      tmp.innerHTML = lines[li].html;
+      var text = tmp.textContent;
+      var ci = 0;
+      (function tick() {
+        ci++;
+        div.textContent = text.slice(0, ci);
+        if (ci < text.length) { setTimeout(tick, li < 2 ? 26 : 12); }
+        else { div.innerHTML = lines[li].html; li++; setTimeout(typeLine, li < 2 ? 350 : 480); }
+      })();
+    }
+    var tio = new IntersectionObserver(function (en) {
+      if (en[0].isIntersecting && !started) { started = true; typeLine(); tio.disconnect(); }
+    }, { threshold: 0.4 });
+    tio.observe(term);
+  }
+
+  /* ---- mini survey ---- */
+  var opts = document.querySelectorAll('.opt');
+  var btn = document.getElementById('submitBtn');
+  var picked = null;
+  opts.forEach(function (o) {
+    o.addEventListener('click', function () {
+      opts.forEach(function (x) { x.classList.remove('sel'); });
+      o.classList.add('sel');
+      picked = o.getAttribute('data-v');
+      btn.disabled = false;
+    });
+  });
+  btn.addEventListener('click', function () {
+    if (!picked) return;
+    var cnt = document.getElementById('cnt');
+    var n = parseInt(cnt.textContent.replace(/,/g, ''), 10) + 1;
+    cnt.textContent = n.toLocaleString('en-US');
+    var live = document.getElementById('surveyLive');
+    var done = document.getElementById('surveyDone');
+    live.style.transition = 'opacity .25s';
+    live.style.opacity = '0';
+    setTimeout(function () {
+      live.style.display = 'none';
+      done.style.display = 'block';
+      done.style.opacity = '0';
+      done.style.transition = 'opacity .35s';
+      requestAnimationFrame(function () { done.style.opacity = '1'; });
+    }, 260);
+  });
+
+  /* ---- copy buttons ---- */
+  document.querySelectorAll('.copy-btn').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var code = b.parentElement.querySelector('code').textContent;
+      navigator.clipboard.writeText(code).then(function () {
+        b.textContent = '✓';
+        setTimeout(function () { b.textContent = '⧉'; }, 1200);
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>
